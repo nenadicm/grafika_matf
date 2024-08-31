@@ -18,6 +18,7 @@
 #include <learnopengl/model.h>
 
 #include <iostream>
+//#include <algorithm>
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 
@@ -30,12 +31,15 @@ void processInput(GLFWwindow *window);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
 unsigned int loadCubemap(vector<std::string> faces);
+void processInput2(GLFWwindow *window);
+
+glm::mat4 updateBirdModel(float time);
+float clamp(float value,float min,float max);
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1600;
+const unsigned int SCR_HEIGHT = 800;
 
-// camera
-
+Camera camera(glm::vec3(0.0f,-20.0f,22.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -44,65 +48,7 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-struct PointLight {
-    glm::vec3 position;
-    glm::vec3 ambient;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
-
-    float constant;
-    float linear;
-    float quadratic;
-};
-
-struct ProgramState {
-    glm::vec3 clearColor = glm::vec3(0);
-    bool ImGuiEnabled = false;
-    Camera camera;
-    bool CameraMouseMovementUpdateEnabled = true;
-    glm::vec3 backpackPosition = glm::vec3(0.0f);
-    float backpackScale = 1.0f;
-    PointLight pointLight;
-    ProgramState()
-            : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
-
-    void SaveToFile(std::string filename);
-
-    void LoadFromFile(std::string filename);
-};
-
-void ProgramState::SaveToFile(std::string filename) {
-    std::ofstream out(filename);
-    out << clearColor.r << '\n'
-        << clearColor.g << '\n'
-        << clearColor.b << '\n'
-        << ImGuiEnabled << '\n'
-        << camera.Position.x << '\n'
-        << camera.Position.y << '\n'
-        << camera.Position.z << '\n'
-        << camera.Front.x << '\n'
-        << camera.Front.y << '\n'
-        << camera.Front.z << '\n';
-}
-
-void ProgramState::LoadFromFile(std::string filename) {
-    std::ifstream in(filename);
-    if (in) {
-        in >> clearColor.r
-           >> clearColor.g
-           >> clearColor.b
-           >> ImGuiEnabled
-           >> camera.Position.x
-           >> camera.Position.y
-           >> camera.Position.z
-           >> camera.Front.x
-           >> camera.Front.y
-           >> camera.Front.z;
-    }
-}
-ProgramState *programState;
-
-void DrawImGui(ProgramState *programState);
+float promena=0;
 
 int main() {
     // glfw: initialize and configure
@@ -128,6 +74,7 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
+
     //glfwSetKeyCallback(window, key_callback);
     // tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -142,25 +89,9 @@ int main() {
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
     //stbi_set_flip_vertically_on_load(true);
 
-    programState = new ProgramState;
-
-    programState->LoadFromFile("resources/program_state.txt");
-    if (programState->ImGuiEnabled) {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    }
-    // Init Imgui
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    (void) io;
-
-
-
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 330 core");
-
     // configure global opengl state
     // -----------------------------
+    //stbi_set_flip_vertically_on_load(true);
     glEnable(GL_DEPTH_TEST);
 
     // build and compile shaders
@@ -227,37 +158,27 @@ int main() {
     //ubacivanje tekstura u sejdere koje sam iznad aktivirala
 
     vector<std::string> skyboxSides = {
-            FileSystem::getPath("resources/textures/skybox/right.jpg"),
-            FileSystem::getPath("resources/textures/skybox/left.jpg"),
-            FileSystem::getPath("resources/textures/skybox/top.jpg"),
-            FileSystem::getPath("resources/textures/skybox/bottom.jpg"),
-            FileSystem::getPath("resources/textures/skybox/front.jpg"),
-            FileSystem::getPath("resources/textures/skybox/back.jpg")
+            FileSystem::getPath("resources/textures/skybox2/right.jpg"),
+            FileSystem::getPath("resources/textures/skybox2/left.jpg"),
+            FileSystem::getPath("resources/textures/skybox2/top.jpg"),
+            FileSystem::getPath("resources/textures/skybox2/bottom.jpg"),
+            FileSystem::getPath("resources/textures/skybox2/front.jpg"),
+            FileSystem::getPath("resources/textures/skybox2/back.jpg")
     };
     unsigned int cubemapTexture=loadCubemap(skyboxSides);
 
 
     // load models
     // -----------
-    Model ourModel("resources/objects/backpack/backpack.obj");
-    ourModel.SetShaderTextureNamePrefix("material.");
-
-    PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
-    pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
-    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
-    pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
-
-    pointLight.constant = 1.0f;
-    pointLight.linear = 0.09f;
-    pointLight.quadratic = 0.032f;
-
+    Model ourModel("resources/objects/objekat2/untitled.obj");
+    //ourModel.SetShaderTextureNamePrefix("material.");
 
 
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
+    float startTime=static_cast<float>(glfwGetTime());
 
     // render loop
     // -----------
@@ -275,42 +196,64 @@ int main() {
 
         // render
         // ------
-        glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
-        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
-        ourShader.setVec3("pointLight.position", pointLight.position);
-        ourShader.setVec3("pointLight.ambient", pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular", pointLight.specular);
-        ourShader.setFloat("pointLight.constant", pointLight.constant);
-        ourShader.setFloat("pointLight.linear", pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        ourShader.setVec3("viewPosition", programState->camera.Position);
+        //pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
+
+        //Directional light
+        ourShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        ourShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+        ourShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+        ourShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+
+        //Pointlight
+        ourShader.setVec3("pointLight.position", glm::vec3(4.0f, 4.0, 0.0));
+        ourShader.setVec3("pointLight.ambient", glm::vec3(0.1, 0.1, 0.1));
+        ourShader.setVec3("pointLight.diffuse", glm::vec3(0.6, 0.6, 0.6));
+        ourShader.setVec3("pointLight.specular", glm::vec3(1.0, 1.0, 1.0));
+        ourShader.setFloat("pointLight.constant", 1.0f);
+        ourShader.setFloat("pointLight.linear", 0.14f);
+        ourShader.setFloat("pointLight.quadratic", 0.07f);
+
+        ourShader.setVec3("viewPosition", camera.Position);
         ourShader.setFloat("material.shininess", 32.0f);
         // view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom),
                                                 (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 view = programState->camera.GetViewMatrix();
+        glm::mat4 view = camera.GetViewMatrix();
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
 
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+
         // render the loaded model
-        glm::mat4 model = glm::mat4(1.0f);
+        /*glm::mat4 model = glm::mat4(1.0f);
+       model=glm::rotate(model,glm::radians(-90.0f),glm::vec3(0.0f,1.0f,0.0f));
         model = glm::translate(model,
                                programState->backpackPosition); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(0.3f));    // it's a bit too big for our scene, so scale it down
+        model = glm::scale(model, glm::vec3(0.006f));    // it's a bit too big for our scene, so scale it down
+        ourShader.setMat4("model", model);
+*/
+        float currentTime=static_cast<float>(glfwGetTime());
+        float elapsedTime=currentTime-startTime;
+        glm::mat4 model=updateBirdModel(elapsedTime);
+        model=glm::rotate(model,glm::radians(180.0f),glm::vec3(1.0f,1.0f,0.0f));
+        model = glm::translate(model,
+                               glm::vec3(0.0f,-3.0f,0.0f)); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(1.0f));    // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
         ourModel.Draw(ourShader);
 
         //render skybox cube
         glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
         skyboxShader.use();
-        view = glm::mat4(glm::mat3(programState->camera.GetViewMatrix()));
-        model = glm::translate(model,
-                              programState->backpackPosition);
+        view = glm::mat4(glm::mat3(camera.GetViewMatrix()));
+        /*model = glm::translate(model,
+                              programState->backpackPosition);*/
         skyboxShader.setMat4("view", view);
         skyboxShader.setMat4("projection", projection);
 
@@ -322,9 +265,6 @@ int main() {
         glBindVertexArray(0);
         glDepthFunc(GL_LESS); // set depth function back to default
 
-        if (programState->ImGuiEnabled)
-            DrawImGui(programState);
-
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
@@ -333,11 +273,6 @@ int main() {
     glDeleteVertexArrays(1, &skyboxVAO);
     glDeleteBuffers(1,&skyboxVBO);
 
-    programState->SaveToFile("resources/program_state.txt");
-    delete programState;
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
@@ -352,13 +287,13 @@ void processInput(GLFWwindow *window) {
         glfwSetWindowShouldClose(window, true);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(FORWARD, deltaTime);
+        camera.ProcessKeyboard(FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(BACKWARD, deltaTime);
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(LEFT, deltaTime);
+        camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        programState->camera.ProcessKeyboard(RIGHT, deltaTime);
+        camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -384,64 +319,15 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     lastX = xpos;
     lastY = ypos;
 
-    if (programState->CameraMouseMovementUpdateEnabled)
-        programState->camera.ProcessMouseMovement(xoffset, yoffset);
+
+    camera.ProcessMouseMovement(xoffset*0.02, yoffset*0.02);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-    programState->camera.ProcessMouseScroll(yoffset);
+    camera.ProcessMouseScroll(yoffset);
 }
-
-
-void DrawImGui(ProgramState *programState) {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-
-    {
-        static float f = 0.0f;
-        ImGui::Begin("Hello window");
-        ImGui::Text("Hello text");
-        ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
-        ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
-        ImGui::DragFloat3("Backpack position", (float*)&programState->backpackPosition);
-        ImGui::DragFloat("Backpack scale", &programState->backpackScale, 0.05, 0.1, 4.0);
-
-        ImGui::DragFloat("pointLight.constant", &programState->pointLight.constant, 0.05, 0.0, 1.0);
-        ImGui::DragFloat("pointLight.linear", &programState->pointLight.linear, 0.05, 0.0, 1.0);
-        ImGui::DragFloat("pointLight.quadratic", &programState->pointLight.quadratic, 0.05, 0.0, 1.0);
-        ImGui::End();
-    }
-
-    {
-        ImGui::Begin("Camera info");
-        const Camera& c = programState->camera;
-        ImGui::Text("Camera position: (%f, %f, %f)", c.Position.x, c.Position.y, c.Position.z);
-        ImGui::Text("(Yaw, Pitch): (%f, %f)", c.Yaw, c.Pitch);
-        ImGui::Text("Camera front: (%f, %f, %f)", c.Front.x, c.Front.y, c.Front.z);
-        ImGui::Checkbox("Camera mouse update", &programState->CameraMouseMovementUpdateEnabled);
-        ImGui::End();
-    }
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
-
-void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
-        programState->ImGuiEnabled = !programState->ImGuiEnabled;
-        if (programState->ImGuiEnabled) {
-            programState->CameraMouseMovementUpdateEnabled = false;
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        } else {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        }
-    }
-}
-
 
 unsigned int loadCubemap(vector<std::string> faces)
 {
@@ -474,3 +360,62 @@ unsigned int loadCubemap(vector<std::string> faces)
 
     return textureID;
 }
+/*
+glm::mat4 updateBirdModel(float time){
+    glm::mat4 model=glm::mat4(1.0f);
+
+    float radius=5.0f;
+    float centerX=0.0f;
+    float centerY=0.0f;
+    float speed=1.0f;
+    //float amplitude=1.0f;
+
+    float angle=speed*time;
+
+    float x=centerX+radius*cos(angle);
+    float y=centerY+radius*sin(angle);
+
+    model=glm::translate(model,glm::vec3(x,y,0.0f));
+    glm::vec2 direction(cos(angle),sin(angle));
+    float rotationAngle=atan2(direction.y,direction.x);
+    model=glm::rotate(model,rotationAngle,glm::vec3(0.0f,0.0f,1.0f));
+
+    return model;
+}*/
+float clamp(float value,float min,float max){
+    if (value<min) return min;
+    if(value>max) return max;
+    return value;
+}
+glm::mat4 updateBirdModel(float time){
+    promena++;
+    glm::mat4 model=glm::mat4(1.0f);
+
+
+    float speed=1.0f;
+    float amplitude=5.0f;
+    float frequency=0.5f;
+    //float amplitude=1.0f;
+
+    //float angle=speed*time;
+
+    float x=speed*time;
+    float y=amplitude*sin(frequency*x);
+    float z=amplitude*cos(frequency*x);
+
+    //x=clamp(x,-10.0,10.0);
+    //y=clamp(y,-10.0,10.0);
+    //z=clamp(z,-10.0,10.0);
+
+    model=glm::translate(model,glm::vec3(x,y,z));
+    glm::vec2 direction(cos(frequency * x), sin(frequency * x));
+    if(promena>10000) {
+        direction = -direction;
+        promena = 0;
+    }
+    float rotationAngle=atan2(direction.y,direction.x);
+    model=glm::rotate(model,rotationAngle,glm::vec3(0.0f,1.0f,0.0f));
+
+    return model;
+}
+
