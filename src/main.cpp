@@ -31,10 +31,9 @@ void processInput(GLFWwindow *window);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
 unsigned int loadCubemap(vector<std::string> faces);
-void processInput2(GLFWwindow *window);
 
-glm::mat4 updateBirdModel(float time);
-glm::mat4 updateBirdModel2(float time);
+glm::mat4 updateModel(float time);
+glm::mat4 updateModel2(float time);
 float clamp(float value,float min,float max);
 // settings
 const unsigned int SCR_WIDTH = 1600;
@@ -205,7 +204,9 @@ int main() {
         // don't forget to enable shader before setting uniforms
         ourShader.use();
         //pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
-
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glFrontFace(GL_CCW);
         //Directional light
         ourShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
         ourShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
@@ -234,18 +235,12 @@ int main() {
         glCullFace(GL_BACK);
 
         // render the loaded model
-        /*glm::mat4 model = glm::mat4(1.0f);
-       model=glm::rotate(model,glm::radians(-90.0f),glm::vec3(0.0f,1.0f,0.0f));
-        model = glm::translate(model,
-                               programState->backpackPosition); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(0.006f));    // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-*/
+
         //model svih balona
 
         float currentTime=static_cast<float>(glfwGetTime());
         float elapsedTime=currentTime-startTime;
-        glm::mat4 model=updateBirdModel(elapsedTime);
+        glm::mat4 model=updateModel(elapsedTime);
         //model=glm::rotate(model,glm::radians(180.0f),glm::vec3(1.0f,1.0f,0.0f));
         //glm::mat4 model=glm::mat4(1.0f);
         model = glm::translate(model,
@@ -257,7 +252,7 @@ int main() {
         //model jednog centralnog balona
         currentTime=static_cast<float>(glfwGetTime());
         elapsedTime=currentTime-startTime;
-        glm::mat4 model2=updateBirdModel2(elapsedTime);
+        glm::mat4 model2=updateModel2(elapsedTime);
         model2 = glm::translate(model2,
                                glm::vec3(10.0f,-3.0f,-20.0f)); // translate it down so it's at the center of the scene
         model2 = glm::scale(model2, glm::vec3(1.0f));    // it's a bit too big for our scene, so scale it down
@@ -376,34 +371,13 @@ unsigned int loadCubemap(vector<std::string> faces)
 
     return textureID;
 }
-/*
-glm::mat4 updateBirdModel(float time){
-    glm::mat4 model=glm::mat4(1.0f);
 
-    float radius=5.0f;
-    float centerX=0.0f;
-    float centerY=0.0f;
-    float speed=1.0f;
-    //float amplitude=1.0f;
-
-    float angle=speed*time;
-
-    float x=centerX+radius*cos(angle);
-    float y=centerY+radius*sin(angle);
-
-    model=glm::translate(model,glm::vec3(x,y,0.0f));
-    glm::vec2 direction(cos(angle),sin(angle));
-    float rotationAngle=atan2(direction.y,direction.x);
-    model=glm::rotate(model,rotationAngle,glm::vec3(0.0f,0.0f,1.0f));
-
-    return model;
-}*/
 float clamp(float value,float min,float max){
     if (value<min) return min;
     if(value>max) return max;
     return value;
 }
-glm::mat4 updateBirdModel(float time){
+glm::mat4 updateModel(float time){
     promena++;
     glm::mat4 model=glm::mat4(1.0f);
 
@@ -441,7 +415,7 @@ glm::mat4 updateBirdModel(float time){
 
     return model;
 }
-glm::mat4 updateBirdModel2(float time){
+glm::mat4 updateModel2(float time){
 
     glm::mat4 model=glm::mat4(1.0f);
 
