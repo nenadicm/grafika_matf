@@ -34,12 +34,13 @@ unsigned int loadCubemap(vector<std::string> faces);
 void processInput2(GLFWwindow *window);
 
 glm::mat4 updateBirdModel(float time);
+glm::mat4 updateBirdModel2(float time);
 float clamp(float value,float min,float max);
 // settings
 const unsigned int SCR_WIDTH = 1600;
 const unsigned int SCR_HEIGHT = 800;
 
-Camera camera(glm::vec3(0.0f,-20.0f,22.0f));
+Camera camera(glm::vec3(0.0f,3.0f,30.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -48,7 +49,7 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-float promena=0;
+float promena=1;
 
 int main() {
     // glfw: initialize and configure
@@ -75,7 +76,6 @@ int main() {
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    //glfwSetKeyCallback(window, key_callback);
     // tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -91,13 +91,15 @@ int main() {
 
     // configure global opengl state
     // -----------------------------
-    //stbi_set_flip_vertically_on_load(true);
     glEnable(GL_DEPTH_TEST);
 
     // build and compile shaders
-    // -------------------------
+
+    // -----------------------------------------------------------------------------------------
+
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
+
     //skybox
     float skyboxVertices[] = {
             // positions
@@ -169,9 +171,10 @@ int main() {
 
 
     // load models
-    // -----------
-    Model ourModel("resources/objects/objekat2/untitled.obj");
-    //ourModel.SetShaderTextureNamePrefix("material.");
+    // --------------------------------------------------------------------------------------
+    Model Model1("resources/objects/objekat2/untitled.obj");
+    Model Model2("resources/objects/objekat3/objekat2.obj");
+    Model1.SetShaderTextureNamePrefix("material.");
 
 
     // draw in wireframe
@@ -238,15 +241,28 @@ int main() {
         model = glm::scale(model, glm::vec3(0.006f));    // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
 */
+        //model svih balona
+
         float currentTime=static_cast<float>(glfwGetTime());
         float elapsedTime=currentTime-startTime;
         glm::mat4 model=updateBirdModel(elapsedTime);
-        model=glm::rotate(model,glm::radians(180.0f),glm::vec3(1.0f,1.0f,0.0f));
+        //model=glm::rotate(model,glm::radians(180.0f),glm::vec3(1.0f,1.0f,0.0f));
+        //glm::mat4 model=glm::mat4(1.0f);
         model = glm::translate(model,
-                               glm::vec3(0.0f,-3.0f,0.0f)); // translate it down so it's at the center of the scene
+                               glm::vec3(0.0f,-3.0f,-3.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(1.0f));    // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
-        ourModel.Draw(ourShader);
+        Model1.Draw(ourShader);
+
+        //model jednog centralnog balona
+        currentTime=static_cast<float>(glfwGetTime());
+        elapsedTime=currentTime-startTime;
+        glm::mat4 model2=updateBirdModel2(elapsedTime);
+        model2 = glm::translate(model2,
+                               glm::vec3(10.0f,-3.0f,-20.0f)); // translate it down so it's at the center of the scene
+        model2 = glm::scale(model2, glm::vec3(1.0f));    // it's a bit too big for our scene, so scale it down
+        ourShader.setMat4("model", model2);
+        Model2.Draw(ourShader);
 
         //render skybox cube
         glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
@@ -392,7 +408,7 @@ glm::mat4 updateBirdModel(float time){
     glm::mat4 model=glm::mat4(1.0f);
 
 
-    float speed=1.0f;
+    float speed=0.4f;
     float amplitude=5.0f;
     float frequency=0.5f;
     //float amplitude=1.0f;
@@ -406,14 +422,49 @@ glm::mat4 updateBirdModel(float time){
     //x=clamp(x,-10.0,10.0);
     //y=clamp(y,-10.0,10.0);
     //z=clamp(z,-10.0,10.0);
+    glm::vec3 pos=glm::vec3(x,y,z);
 
     model=glm::translate(model,glm::vec3(x,y,z));
-    glm::vec2 direction(cos(frequency * x), sin(frequency * x));
+    glm::vec3 direction(cos(frequency * x), sin(frequency * x),z);
+    /*
+    pos+=(direction*speed*deltaTime);
+    if(x<-10.0f || x>10.0f || y<-10.0f || y>10.0f || z<-10.0f || z>10.0f){
+        promena=-promena;
+    }
     if(promena>10000) {
         direction = -direction;
         promena = 0;
-    }
-    float rotationAngle=atan2(direction.y,direction.x);
+    }*/
+    direction=direction*promena;
+    float rotationAngle=atan2(direction.y/2.0f,direction.x/2.0f);
+    model=glm::rotate(model,rotationAngle,glm::vec3(0.0f,1.0f,0.0f));
+
+    return model;
+}
+glm::mat4 updateBirdModel2(float time){
+
+    glm::mat4 model=glm::mat4(1.0f);
+
+
+    float speed=0.6f;
+    float amplitude=5.0f;
+    float frequency=0.5f;
+    //float amplitude=1.0f;
+
+    //float angle=speed*time;
+
+    float x=speed*time;
+    float y=amplitude*cos(frequency*x);
+    float z=amplitude*sin(frequency*x);
+
+    //x=clamp(x,-10.0,10.0);
+    //y=clamp(y,-10.0,10.0);
+    //z=clamp(z,-10.0,10.0);
+
+    model=glm::translate(model,glm::vec3(x,y,z));
+    glm::vec2 direction(-cos(frequency * x), sin(frequency * x));
+
+    float rotationAngle=atan2(direction.y/2.0f,direction.x/2.0f);
     model=glm::rotate(model,rotationAngle,glm::vec3(0.0f,1.0f,0.0f));
 
     return model;
