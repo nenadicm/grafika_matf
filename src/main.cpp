@@ -32,6 +32,8 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 
 unsigned int loadCubemap(vector<std::string> faces);
 
+unsigned int loadTexture(char const * path);
+
 glm::mat4 updateModel(float time);
 glm::mat4 updateModel2(float time);
 float clamp(float value,float min,float max);
@@ -49,6 +51,8 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 float promena=1;
+bool prozor=false;
+bool prov=false;
 
 int main() {
     // glfw: initialize and configure
@@ -91,6 +95,10 @@ int main() {
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    //glDepthFunc(GL_LESS);
 
     // build and compile shaders
 
@@ -98,7 +106,87 @@ int main() {
 
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
+    //Shader shader("resources/shaders/cube.vs", "resources/shaders/cube.fs");
+    //kocka
+    /*
+    float cubeVertices[] = {
+            // positions          // texture Coords
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+            0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+    };
+
+    float planeVertices[] = {
+            // positions          // texture Coords
+            5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
+            -5.0f, -0.5f,  5.0f,  0.0f, 0.0f,
+            -5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
+
+            5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
+            -5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
+            5.0f, -0.5f, -5.0f,  2.0f, 2.0f
+    };
+    float transparentVertices[] = {
+            // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+            1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+    };*/
+    float windowVertices[] = {
+            // positions          // normals          // texture coords
+            0.5f,  0.5f,  0.0f,  0.0f, 0.0f, -1.0f,  1.0f,  1.0f,  // top right
+            0.5f, -0.5f,  0.0f,  0.0f, 0.0f, -1.0f,  1.0f,  0.0f,  // bottom right
+            -0.5f, -0.5f,  0.0f,  0.0f, 0.0f, -1.0f,  0.0f,  0.0f,  // bottom left
+            -0.5f,  0.5f,  0.0f,  0.0f, 0.0f, -1.0f,  0.0f,  1.0f   // top left
+    };
+
+    // window vertices for use in EBO
+    unsigned int windowIndices[] = {
+            0, 1, 3,  // first Triangle
+            1, 2, 3   // second Triangle
+    };
     //skybox
     float skyboxVertices[] = {
             // positions
@@ -145,6 +233,25 @@ int main() {
             1.0f, -1.0f,  1.0f
     };
 
+    unsigned int windowVAO, windowVBO, windowEBO;
+    glGenVertexArrays(1, &windowVAO);
+    glGenBuffers(1, &windowVBO);
+    glGenBuffers(1, &windowEBO);
+
+    glBindVertexArray(windowVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, windowVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(windowVertices), windowVertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, windowEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(windowIndices), windowIndices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    //skybox
     unsigned int skyboxVAO, skyboxVBO;
     glGenVertexArrays(1, &skyboxVAO);
     glGenBuffers(1, &skyboxVBO);
@@ -155,6 +262,10 @@ int main() {
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
+
+
+    // transparent VAO
+
 
     //ubacivanje tekstura u sejdere koje sam iznad aktivirala
 
@@ -167,19 +278,24 @@ int main() {
             FileSystem::getPath("resources/textures/skybox2/back.jpg")
     };
     unsigned int cubemapTexture=loadCubemap(skyboxSides);
-
-
+    unsigned int windowDiff = loadTexture(FileSystem::getPath("resources/textures/vitraz4.png").c_str());
+    unsigned int windowSpec = loadTexture(FileSystem::getPath("resources/textures/vitraz4.png").c_str());
     // load models
     // --------------------------------------------------------------------------------------
     Model Model1("resources/objects/objekat2/untitled.obj");
     Model Model2("resources/objects/objekat3/objekat2.obj");
     Model1.SetShaderTextureNamePrefix("material.");
 
+    glm::vec3 sl=glm::vec3(0.0f,0.0f,0.0f);
+
 
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
+
+    //shader.use();
+    //shader.setInt("texture1", 0);
     float startTime=static_cast<float>(glfwGetTime());
 
     // render loop
@@ -198,16 +314,21 @@ int main() {
 
         // render
         // ------
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //glDepthFunc(GL_LESS);
+
+
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
+
         //pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
         glFrontFace(GL_CCW);
         //Directional light
+        ourShader.setBool("prov",prov);
         ourShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
         ourShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
         ourShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
@@ -228,11 +349,12 @@ int main() {
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom),
                                                 (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 model = glm::mat4(1.0f);
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
+        glDisable(GL_CULL_FACE);
+        //glCullFace(GL_BACK);
 
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
 
         // render the loaded model
 
@@ -240,11 +362,11 @@ int main() {
 
         float currentTime=static_cast<float>(glfwGetTime());
         float elapsedTime=currentTime-startTime;
-        glm::mat4 model=updateModel(elapsedTime);
+        model=updateModel(elapsedTime);
         //model=glm::rotate(model,glm::radians(180.0f),glm::vec3(1.0f,1.0f,0.0f));
         //glm::mat4 model=glm::mat4(1.0f);
         model = glm::translate(model,
-                               glm::vec3(0.0f,-3.0f,-3.0f)); // translate it down so it's at the center of the scene
+                               glm::vec3(0.0f,-5.0f,-3.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(1.0f));    // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
         Model1.Draw(ourShader);
@@ -254,11 +376,35 @@ int main() {
         elapsedTime=currentTime-startTime;
         glm::mat4 model2=updateModel2(elapsedTime);
         model2 = glm::translate(model2,
-                               glm::vec3(10.0f,-3.0f,-20.0f)); // translate it down so it's at the center of the scene
+                               glm::vec3(10.0f,-5.0f,-20.0f)); // translate it down so it's at the center of the scene
         model2 = glm::scale(model2, glm::vec3(1.0f));    // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model2);
         Model2.Draw(ourShader);
+        ourShader.setBool("window", false);
 
+        if(prozor==true) {
+            ourShader.setBool("window", true);
+            glBindVertexArray(windowVAO);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, windowDiff);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, windowSpec);
+            //glEnable(GL_CULL_FACE);   // window won't be visible if looked from bellow
+            //glCullFace(GL_BACK);
+
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, 5.0f, 10.0f));
+            //model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, -1.0f, 1.0f));
+            model = glm::scale(model, glm::vec3(30.0f));
+            ourShader.setMat4("model", model);
+
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+            glDisable(GL_CULL_FACE);
+
+            ourShader.setBool("window", false);
+
+        }
         //render skybox cube
         glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
         skyboxShader.use();
@@ -283,6 +429,8 @@ int main() {
     }
     glDeleteVertexArrays(1, &skyboxVAO);
     glDeleteBuffers(1,&skyboxVBO);
+    glDeleteVertexArrays(1, &windowVAO);
+    glDeleteBuffers(1, &windowVBO);
 
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
@@ -296,7 +444,18 @@ int main() {
 void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-
+    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS){
+        prozor=true;
+        //std::cout<<'prikazanooo';
+    }else if(glfwGetKey(window, GLFW_KEY_M) == GLFW_RELEASE){
+        prozor=false;
+    }
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS){
+        prov=true;
+        //std::cout<<'prikazanooo';
+    }else if(glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE){
+        prov=false;
+    }
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.ProcessKeyboard(FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -442,5 +601,41 @@ glm::mat4 updateModel2(float time){
     model=glm::rotate(model,rotationAngle,glm::vec3(0.0f,1.0f,0.0f));
 
     return model;
+}
+unsigned int loadTexture(char const * path)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+
+    int width, height, nrComponents;
+    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+    if (data)
+    {
+        GLenum format;
+        if (nrComponents == 1)
+            format = GL_RED;
+        else if (nrComponents == 3)
+            format = GL_RGB;
+        else if (nrComponents == 4)
+            format = GL_RGBA;
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    }
+    else
+    {
+        std::cout << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+    }
+
+    return textureID;
 }
 
