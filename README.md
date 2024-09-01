@@ -17,3 +17,5 @@ Autor: Marija Nenadic 239/2021
 3. Klikom na taster M se pojavlje prozirni vitraz na kome je implementiran Blending
 4. Ubacena dva modela koja se krecu po putanji
 5. Iz grupe A implementirano: Cubemaps( skybox)
+![sl1](https://github.com/user-attachments/assets/e04e3455-0028-4a6b-b06e-f545926bfd0a)
+![sl2](https://github.com/user-attachments/assets/cdbb72f1-413c-49ad-9eb5-2af5a20053c9)
